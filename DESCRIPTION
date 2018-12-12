@@ -1,0 +1,21 @@
+Package: kwb.ogre.model
+Type: Package
+Title: Load Model Developed in OGRE Project
+Version: 0.1.0.9000
+Date: 2016-09-20
+Author: Andreas Matzinger
+Maintainer: Hauke Sonnenberg <hauke.sonnenberg@kompetenz-wasser.de>
+Description: This package contains the functions written by Andreas Matzinger
+    that were originally located in the script "OgRe_LoadModel_functions.R".
+    Since this script was copied by some students and then adapted there are many
+    duplicated functions now. I (Hauke) will replace those functions in the copied
+    scripts that did not change at all with "links" to the original functions in
+    this package.
+Imports:
+    kwb.odm,
+    kwb.ogre,
+    kwb.utils,
+    dplyr
+License: GPL-2
+LazyData: TRUE
+RoxygenNote: 6.0.1
