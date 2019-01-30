@@ -426,25 +426,25 @@ annual_mean_conc <- function
 #'
 #' @importFrom dplyr %>%
 #' @importFrom dplyr summarise
-#'
+#' @importFrom rlang .data
 #' @export
 default_statistics <- function(x)
 {
   x %>% summarise(
-    mean = mean(DataValue),
-    N = length(DataValue),
-    N_lt = sum(CensorCode == "lt"),
-    N_nc = sum(CensorCode == "nc"),
-    stdev = stats::sd(DataValue),
-    var = stats::var(DataValue),
-    se = stats::sd(DataValue) / sqrt(length(DataValue) - 1),
-    min = min(DataValue),
-    max = max(DataValue),
-    median = stats::median(DataValue),
-    quantile25 = quant25(DataValue),
-    quantile75 = quant75(DataValue),
-    quantile95 = quant95(DataValue),
-    mean_geom = geom_mean(DataValue)
+    mean = mean(.data$DataValue),
+    N = length(.data$DataValue),
+    N_lt = sum(.data$CensorCode == "lt"),
+    N_nc = sum(.data$CensorCode == "nc"),
+    stdev = stats::sd(.data$DataValue),
+    var = stats::var(.data$DataValue),
+    se = stats::sd(.data$DataValue) / sqrt(length(.data$DataValue) - 1),
+    min = min(.data$DataValue),
+    max = max(.data$DataValue),
+    median = stats::median(.data$DataValue),
+    quantile25 = quant25(.data$DataValue),
+    quantile75 = quant75(.data$DataValue),
+    quantile95 = quant95(.data$DataValue),
+    mean_geom = geom_mean(.data$DataValue)
   )
 }
 
@@ -462,7 +462,7 @@ default_statistics <- function(x)
 #' @importFrom dplyr group_by
 #' @importFrom dplyr summarise
 #' @importFrom dplyr arrange
-#'
+#' @importFrom rlang .data
 #' @export
 annual_stats <- function
 (
@@ -470,16 +470,23 @@ annual_stats <- function
 )
 {
   # Provide vector of SiteCodes ordered by their SiteID
-  site_names <- (x_in %>% group_by(SiteID, SiteCode) %>% summarise())$SiteCode
+  site_names <- (x_in %>%
+                   dplyr::group_by(.data$SiteID,
+                                   .data$SiteCode) %>% summarise())$SiteCode
 
   # Provide statistics grouped by SiteCode and Variable
   x_summary <- x_in %>%
-    group_by(SiteCode, VariableID, VariableName, UnitsAbbreviation) %>%
+    dplyr::group_by(.data$SiteCode,
+                    .data$VariableID,
+                    .data$VariableName,
+                    .data$UnitsAbbreviation) %>%
     default_statistics()
 
   # Provide statistics grouped by Variable only
   x_total <- x_in %>%
-    group_by(VariableID, VariableName, UnitsAbbreviation) %>%
+    dplyr::group_by(.data$VariableID,
+                    .data$VariableName,
+                    .data$UnitsAbbreviation) %>%
     default_statistics()
 
   # Provide vectors of column names
@@ -511,7 +518,7 @@ annual_stats <- function
     y <- x_total[, c(columns.variable, column)]
     names(y)[ncol(y)] <- "Gesamt"
 
-    result <- merge(x, y) %>% arrange(VariableID)
+    result <- merge(x, y) %>% arrange(.data$VariableID)
 
     x_out[[column]] <- result
   }
@@ -907,123 +914,144 @@ geom_mean <- function (x)
 }
 
 # myFunction_exp ---------------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myFunction_exp <- function(x, A, B)
 {
   exp(B * x + A)
 }
 
 # myErrorFunction_exp ----------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myErrorFunction_exp <- function(x, A, B, RMSE)
 {
   exp(B * x + A)*B*RMSE
 }
 
 # myFunction_linear ------------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myFunction_linear <- function(x, A, B)
 {
   B * x + A
 }
 
 # myErrorFunction_linear -------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myErrorFunction_linear <- function(B, RMSE)
 {
   B * RMSE
 }
 
 # myFunction_pot ---------------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myFunction_pot <- function(x, A, B)
 {
   A * x^B
 }
 
 # myErrorFunction_pot ----------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myErrorFunction_pot <- function(x, A, B, RMSE)
 {
   A * B * x^(B-1) * RMSE
 }
 
 # myFunction_rcp ---------------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myFunction_rcp <- function(x, A, B)
 {
   A/x + B
 }
 
 # myErrorFunction_rcp ----------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myErrorFunction_rcp <- function(x, A, RMSE)
 {
   -A/(x^2) * RMSE
 }
 
 # myFunction_log ---------------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myFunction_log <- function(x, A, B)
 {
   B * ln(x) + A
 }
 
 # myErrorFunction_log ----------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myErrorFunction_log <- function(x, B, RMSE)
 {
   B/x * RMSE
 }
 
 # myFunction_polynom -----------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myFunction_polynom <- function(x, A, B)
 {
   B * x^2 + A
 }
 
 # myErrorFunction_polynom ------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myErrorFunction_polynom <- function(x, B, RMSE)
 {
   2 * B * x * RMSE
 }
 
 # myFunction_seasonal ----------------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myFunction_seasonal <- function(x, A, B)
 {
   c(A,B)[x]
 }
 
 # myErrorFunction_seasonal -----------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 myErrorFunction_seasonal <- function(x, RMSE_A, RMSE_B)
 {
   c(RMSE_A,RMSE_B)[x]
 }
 
 # myFunction_quarterly ---------------------------------------------------------
+#' @keywords internal
+#' @noRd
 myFunction_quarterly <- function(x, A, B, C, D)
 {
   c(A,B,C,D)[x]
 }
 
 # myErrorFunction_quarterly ----------------------------------------------------
+#' @keywords internal
+#' @noRd
 myErrorFunction_quarterly <- function(x, RMSE_A, RMSE_B, RMSE_C, RMSE_D)
 {
   c(RMSE_A,RMSE_B,RMSE_C,RMSE_D)[x]
 }
 
 # ln ---------------------------------------------------------------------------
+#' @keywords internal
+#' @noRd
 ln <- function(x)
 {
   log(x, base = exp(1))
 }
 
 # annual_mean_conc_method1 -----------------------------------------------------
-#' @export
+#' @keywords internal
+#' @noRd
 annual_mean_conc_method1 <- function(x_in, x_out_mean, x_out_stdev, site_names)
 {
   for (site_name in site_names) {
@@ -1046,7 +1074,8 @@ annual_mean_conc_method1 <- function(x_in, x_out_mean, x_out_stdev, site_names)
 
 # annual_mean_conc_method2 -----------------------------------------------------
 #' @importFrom kwb.utils hsRenameColumns
-#' @export
+#' @keywords internal
+#' @noRd
 annual_mean_conc_method2 <- function(x_out_mean, x_out_stdev, site_names, data.dir)
 {
 

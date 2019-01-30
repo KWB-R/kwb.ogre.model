@@ -1,21 +1,42 @@
 Package: kwb.ogre.model
-Type: Package
 Title: Load Model Developed in OGRE Project
-Version: 0.1.0.9000
-Date: 2016-09-20
-Author: Andreas Matzinger
-Maintainer: Hauke Sonnenberg <hauke.sonnenberg@kompetenz-wasser.de>
-Description: This package contains the functions written by Andreas Matzinger
-    that were originally located in the script "OgRe_LoadModel_functions.R".
-    Since this script was copied by some students and then adapted there are many
-    duplicated functions now. I (Hauke) will replace those functions in the copied
-    scripts that did not change at all with "links" to the original functions in
-    this package.
+Version: 0.0.0.9000
+Authors@R: 
+    c(person(given = "Andreas",
+             family = "Matzinger",
+             role = "aut",
+             email = "andreas.matzinger@kompetenz-wasser.de",
+             comment = c(ORCID = "0000-0001-5483-4594")),
+      person(given = "Hauke",
+             family = "Sonnenberg",
+             role = c("aut", "cre"),
+             email = "hauke.sonnenberg@kompetenz-wasser.de",
+             comment = c(ORCID = "0000-0001-9134-2871")),
+      person(given = "Michael",
+             family = "Rustler",
+             role = "ctb",
+             email = "michael.rustler@kompetenz-wasser.de",
+             comment = c(ORCID = "0000-0003-0647-7726")),
+      person(given = "Kompetenzzentrum Wasser Berlin gGmbH (KWB)",
+             role = "cph"))
+Description: This package contains the functions written by
+    Andreas Matzinger that were originally located in the script
+    "OgRe_LoadModel_functions.R".  Since this script was copied by some
+    students and then adapted there are many duplicated functions now. I
+    (Hauke) will replace those functions in the copied scripts that did
+    not change at all with "links" to the original functions in this
+    package.
+License: GPL-2
 Imports:
     kwb.odm,
     kwb.ogre,
     kwb.utils,
-    dplyr
-License: GPL-2
+    dplyr,
+    rlang
+Remotes: 
+    github::kwb-r/kwb.odm,
+    github::kwb-r/kwb.ogre,
+    github::kwb-r/kwb.utils
+Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
