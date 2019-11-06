@@ -509,39 +509,26 @@ annual_stats <- function(x_in)
 annual_load_rain <- function(data.dir, error_removal_rate = 0.3)
 {
   #load data
-  vol_rain <- utils::read.csv2(
-    file = get_path_or_stop(data.dir, "Vol_rain.csv", "rain runoff"),
-    stringsAsFactors = FALSE
-  )
+  vol_rain <- read_1(file = get_path_or_stop(
+    data.dir, "Vol_rain.csv", "rain runoff"
+  ))
 
-  error_vol_rain <- utils::read.table(
-    file = get_path_or_stop(
-      data.dir, "Vol_rain_relative_error.csv", "rain runoff"
-    ),
-    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
-  )
+  error_vol_rain <- read_2(file = get_path_or_stop(
+    data.dir, "Vol_rain_relative_error.csv", "rain runoff"
+  ))
 
-  x_conc <- utils::read.table(
-    file = get_path_or_stop(
-      data.dir, "annual_mean_conc.csv", "annual mean concentrations"
-    ),
-    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
-  )
+  x_conc <- read_2(file = get_path_or_stop(
+    data.dir, "annual_mean_conc.csv", "annual mean concentrations"
+  ))
 
-  error_x_conc <- utils::read.table(
-    file = get_path_or_stop(
-      data.dir, "annual_mean_conc_relative_error.csv",
-      "annual mean concentrations"
-    ),
-    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
-  )
+  error_x_conc <- read_2(file = get_path_or_stop(
+    data.dir, "annual_mean_conc_relative_error.csv",
+    "annual mean concentrations"
+  ))
 
-  removal_rates <- utils::read.csv2(
-    file = get_path_or_stop(
-      data.dir, "substance_info.csv", "removal rates at WWTP"
-    ),
-    header = TRUE, stringsAsFactors = FALSE
-  )
+  removal_rates <- read_1(file = get_path_or_stop(
+    data.dir, "substance_info.csv", "removal rates at WWTP"
+  ))
 
   # missing removal rates are set = 0
   removal_rates[, 2] <- as.numeric(removal_rates[, 2])
@@ -741,24 +728,17 @@ annual_load_sewage <- function(
 )
 {
   #load data
-  vol_sewage <- utils::read.table(
-    file = get_path_or_stop(data.dir, "Vol_sewage.csv", "sewage runoff"),
-    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
-  )
+  vol_sewage <- read_2(file = get_path_or_stop(
+    data.dir, "Vol_sewage.csv", "sewage runoff"
+  ))
 
-  error_vol_sewage <- utils::read.table(
-    file = get_path_or_stop(
-      data.dir, "Vol_sewage_relative_error.csv", "sewage runoff"
-    ),
-    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
-  )
+  error_vol_sewage <- read_2(file = get_path_or_stop(
+    data.dir, "Vol_sewage_relative_error.csv", "sewage runoff"
+  ))
 
-  sub_sew_info <- utils::read.csv2(
-    file = get_path_or_stop(
-      data.dir, "substance_info.csv", "substance information WWTP"
-    ),
-    header = TRUE, stringsAsFactors = FALSE
-  )
+  sub_sew_info <- read_1(file = get_path_or_stop(
+    data.dir, "substance_info.csv", "substance information WWTP"
+  ))
 
   # read substance information, discard substances with lacking info
   sub_sew_info$CoutWWTP <- as.numeric(sub_sew_info$CoutWWTP)
@@ -1062,20 +1042,13 @@ annual_mean_conc_method1 <- function(x_in, x_out_mean, x_out_stdev, site_names)
 annual_mean_conc_method2 <- function(x_out_mean, x_out_stdev, site_names, data.dir)
 {
   #read correlation info and rain series
-  x_correlations <- utils::read.table(
-    file = get_path_or_stop(
-      data.dir, "correlations_substances.csv", "correlations"
-    ),
-    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE,
-    comment.char = ""
-  )
+  x_correlations <- read_2(comment.char = "", file = get_path_or_stop(
+    data.dir, "correlations_substances.csv", "correlations"
+  ))
 
-  x_rain_events <- utils::read.table(
-    file = get_path_or_stop(
-      data.dir, "RainEvents_1961_1990_Dahlem.csv", "rain runoff"
-    ),
-    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
-  )
+  x_rain_events <- read_2(file = get_path_or_stop(
+    data.dir, "RainEvents_1961_1990_Dahlem.csv", "rain runoff"
+  ))
 
   #keep only lines active for model calculations
   x_correlations <- x_correlations[which(x_correlations$active == "x"),]
