@@ -291,7 +291,7 @@ adapt_nondetect <- function(x_in, x_nd, factor = 0.5)
   for (i in seq_len(dim(x_nd)[2] - 1)) {
 
     #set samples <dl for substances which are never detected = 0
-    y <- match(x_in$VariableName, x_nd[,i+1])
+    y <- match(x_in$VariableName, x_nd[, i + 1])
     indices <- which(x_in$SiteCode == site_names[i] & y > 0)
     x_in$DataValue[indices] <- 0
   }
@@ -325,7 +325,7 @@ annual_mean_conc <- function(x_in, method, data.dir)
 {
   #order by VariableID
   y <- order(x_in$VariableID)
-  x_in <- x_in[y,]
+  x_in <- x_in[y, ]
 
   #find existing sites
   site_IDs <- unique(x_in$SiteID)
@@ -555,8 +555,8 @@ annual_load_rain <- function(data.dir, error_removal_rate = 0.3)
   )
 
   indices <- order(sum_EZG$x, decreasing = TRUE)
-  sum_EZG <- sum_EZG[indices,]
-  EZG_names <- sum_EZG[,1]
+  sum_EZG <- sum_EZG[indices, ]
+  EZG_names <- sum_EZG[, 1]
 
   # structure of calculation files
   load_sep <- x_conc[, c(1, 2, 4:9)]
@@ -574,71 +574,115 @@ annual_load_rain <- function(data.dir, error_removal_rate = 0.3)
   x_out_by_pathway_kg_yr <- list()
   error_by_pathway_kg_yr <- list()
 
-  for (i in seq_along(EZG_names)) {
+  for (EZG in EZG_names) {
 
-    indices <- which(vol_rain$SUW == EZG_names[i])
-    vol_rain_EZG <- vol_rain[indices,]
-    error_vol_rain_EZG <- error_vol_rain[indices,]
+    indices <- which(vol_rain$SUW == EZG)
+
+    vol_rain_EZG <- vol_rain[indices, ]
+    error_vol_rain_EZG <- error_vol_rain[indices, ]
+
+    # Define vector of site codes
+    sites <- c("ALT", "NEU", "STR", "EFH", "GEW", "ANDERE")
 
     # loads of rain-water based substances via separate sewer system
-    load_sep$ALT <- x_conc$ALT * vol_rain_EZG$ALT[1]
-    load_sep$NEU <- x_conc$NEU * vol_rain_EZG$NEU[1]
-    load_sep$STR <- x_conc$STR * vol_rain_EZG$STR[1]
-    load_sep$EFH <- x_conc$EFH * vol_rain_EZG$EFH[1]
-    load_sep$GEW <- x_conc$GEW * vol_rain_EZG$GEW[1]
-    load_sep$ANDERE <- x_conc$ANDERE * vol_rain_EZG$ANDERE[1]
-    load_sep$TOT <- load_sep$ALT + load_sep$NEU + load_sep$STR + load_sep$EFH +
-      load_sep$GEW + load_sep$ANDERE
+    for (site in sites) {
+
+      load_sep[[site]] <- x_conc[[site]] * vol_rain_EZG[[site]][1]
+    }
+
+    load_sep$TOT <-
+      load_sep$ALT +
+      load_sep$NEU +
+      load_sep$STR +
+      load_sep$EFH +
+      load_sep$GEW +
+      load_sep$ANDERE
 
     # absolute errors in loads of rain-water based substances via separate sewer system
-    error_load_sep$ALT <- sqrt(error_x_conc$ALT^2 + error_vol_rain_EZG$ALT[1]^2)*load_sep$ALT
-    error_load_sep$NEU <- sqrt(error_x_conc$NEU^2 + error_vol_rain_EZG$NEU[1]^2)*load_sep$NEU
-    error_load_sep$STR <- sqrt(error_x_conc$STR^2 + error_vol_rain_EZG$STR[1]^2)*load_sep$STR
-    error_load_sep$EFH <- sqrt(error_x_conc$EFH^2 + error_vol_rain_EZG$EFH[1]^2)*load_sep$EFH
-    error_load_sep$GEW <- sqrt(error_x_conc$GEW^2 + error_vol_rain_EZG$GEW[1]^2)*load_sep$GEW
-    error_load_sep$ANDERE <- sqrt(error_x_conc$ANDERE^2 + error_vol_rain_EZG$ANDERE[1]^2)*load_sep$ANDERE
-    error_load_sep$TOT <- sqrt(error_load_sep$ALT^2 + error_load_sep$NEU^2 + error_load_sep$STR^2 + error_load_sep$EFH^2 +
-      error_load_sep$GEW^2 + error_load_sep$ANDERE^2)
+    for (site in sites) {
+
+      error_load_sep[[site]] <- load_sep[[site]] * sqrt(
+        error_x_conc[[site]]^2 + error_vol_rain_EZG[[site]][1]^2
+      )
+    }
+
+    error_load_sep$TOT <- sqrt(
+      error_load_sep$ALT^2 +
+      error_load_sep$NEU^2 +
+      error_load_sep$STR^2 +
+      error_load_sep$EFH^2 +
+      error_load_sep$GEW^2 +
+      error_load_sep$ANDERE^2
+    )
 
     # loads of rain-water based substances via CSO
-    load_CSO$ALT <- x_conc$ALT * vol_rain_EZG$ALT[2]
-    load_CSO$NEU <- x_conc$NEU * vol_rain_EZG$NEU[2]
-    load_CSO$STR <- x_conc$STR * vol_rain_EZG$STR[2]
-    load_CSO$EFH <- x_conc$EFH * vol_rain_EZG$EFH[2]
-    load_CSO$GEW <- x_conc$GEW * vol_rain_EZG$GEW[2]
-    load_CSO$ANDERE <- x_conc$ANDERE * vol_rain_EZG$ANDERE[2]
-    load_CSO$TOT <- load_CSO$ALT + load_CSO$NEU + load_CSO$STR + load_CSO$EFH +
-      load_CSO$GEW + load_CSO$ANDERE
+    for (site in sites) {
+
+      load_CSO[[site]] <- x_conc[[site]] * vol_rain_EZG[[site]][2]
+    }
+
+    load_CSO$TOT <-
+      load_CSO$ALT +
+      load_CSO$NEU +
+      load_CSO$STR +
+      load_CSO$EFH +
+      load_CSO$GEW +
+      load_CSO$ANDERE
 
     # absolute errors in loads of rain-water based substances via CSO
-    error_load_CSO$ALT <- sqrt(error_x_conc$ALT^2 + error_vol_rain_EZG$ALT[2]^2)*load_CSO$ALT
-    error_load_CSO$NEU <- sqrt(error_x_conc$NEU^2 + error_vol_rain_EZG$NEU[2]^2)*load_CSO$NEU
-    error_load_CSO$STR <- sqrt(error_x_conc$STR^2 + error_vol_rain_EZG$STR[2]^2)*load_CSO$STR
-    error_load_CSO$EFH <- sqrt(error_x_conc$EFH^2 + error_vol_rain_EZG$EFH[2]^2)*load_CSO$EFH
-    error_load_CSO$GEW <- sqrt(error_x_conc$GEW^2 + error_vol_rain_EZG$GEW[2]^2)*load_CSO$GEW
-    error_load_CSO$ANDERE <- sqrt(error_x_conc$ANDERE^2 + error_vol_rain_EZG$ANDERE[2]^2)*load_CSO$ANDERE
-    error_load_CSO$TOT <- sqrt(error_load_CSO$ALT^2 + error_load_CSO$NEU^2 + error_load_CSO$STR^2 + error_load_CSO$EFH^2 +
-                                 error_load_CSO$GEW^2 + error_load_CSO$ANDERE^2)
+    for (site in sites) {
+
+      error_load_CSO[[site]] <- load_CSO[[site]] * sqrt(
+        error_x_conc[[site]]^2 + error_vol_rain_EZG[[site]][2]^2
+      )
+    }
+
+    error_load_CSO$TOT <- sqrt(
+      error_load_CSO$ALT^2 +
+      error_load_CSO$NEU^2 +
+      error_load_CSO$STR^2 +
+      error_load_CSO$EFH^2 +
+      error_load_CSO$GEW^2 +
+      error_load_CSO$ANDERE^2
+    )
 
     # loads of rain-water based substances via WWTP
-    load_WWTP$ALT <- x_conc$ALT * vol_rain_EZG$ALT[3] * (1-removal_rates_red$removal_percent/100)
-    load_WWTP$NEU <- x_conc$NEU * vol_rain_EZG$NEU[3] * (1-removal_rates_red$removal_percent/100)
-    load_WWTP$STR <- x_conc$STR * vol_rain_EZG$STR[3] * (1-removal_rates_red$removal_percent/100)
-    load_WWTP$EFH <- x_conc$EFH * vol_rain_EZG$EFH[3] * (1-removal_rates_red$removal_percent/100)
-    load_WWTP$GEW <- x_conc$GEW * vol_rain_EZG$GEW[3] * (1-removal_rates_red$removal_percent/100)
-    load_WWTP$ANDERE <- x_conc$ANDERE * vol_rain_EZG$ANDERE[3] * (1-removal_rates_red$removal_percent/100)
-    load_WWTP$TOT <- load_WWTP$ALT + load_WWTP$NEU + load_WWTP$STR + load_WWTP$EFH +
-      load_WWTP$GEW + load_WWTP$ANDERE
+    rate_remaining <- (1 - removal_rates_red$removal_percent / 100)
+
+    for (site in sites) {
+
+      load_WWTP[[site]] <-
+        x_conc[[site]] *
+        vol_rain_EZG[[site]][3] *
+        rate_remaining
+    }
+
+    load_WWTP$TOT <-
+      load_WWTP$ALT +
+      load_WWTP$NEU +
+      load_WWTP$STR +
+      load_WWTP$EFH +
+      load_WWTP$GEW +
+      load_WWTP$ANDERE
 
     # error in loads of rain-water based substances via WWTP
-    error_load_WWTP$ALT <- sqrt(error_x_conc$ALT^2 + error_vol_rain_EZG$ALT[3]^2 + error_removal_rate^2)*load_WWTP$ALT
-    error_load_WWTP$NEU <- sqrt(error_x_conc$NEU^2 + error_vol_rain_EZG$NEU[3]^2 + error_removal_rate^2)*load_WWTP$NEU
-    error_load_WWTP$STR <- sqrt(error_x_conc$STR^2 + error_vol_rain_EZG$STR[3]^2 + error_removal_rate^2)*load_WWTP$STR
-    error_load_WWTP$EFH <- sqrt(error_x_conc$EFH^2 + error_vol_rain_EZG$EFH[3]^2 + error_removal_rate^2)*load_WWTP$EFH
-    error_load_WWTP$GEW <- sqrt(error_x_conc$GEW^2 + error_vol_rain_EZG$GEW[3]^2 + error_removal_rate^2)*load_WWTP$GEW
-    error_load_WWTP$ANDERE <- sqrt(error_x_conc$ANDERE^2 + error_vol_rain_EZG$ANDERE[3]^2 + error_removal_rate^2)*load_WWTP$ANDERE
-    error_load_WWTP$TOT <- sqrt(error_load_WWTP$ALT^2 + error_load_WWTP$NEU^2 + error_load_WWTP$STR^2 + error_load_WWTP$EFH^2 +
-                                 error_load_WWTP$GEW^2 + error_load_WWTP$ANDERE^2)
+    for (site in sites) {
+
+      error_load_WWTP[[site]] <- load_WWTP[[site]] * sqrt(
+        error_x_conc[[site]]^2 +
+        error_vol_rain_EZG[[site]][3]^2 +
+        error_removal_rate^2
+      )
+    }
+
+    error_load_WWTP$TOT <- sqrt(
+      error_load_WWTP$ALT^2 +
+      error_load_WWTP$NEU^2 +
+      error_load_WWTP$STR^2 +
+      error_load_WWTP$EFH^2 +
+      error_load_WWTP$GEW^2 +
+      error_load_WWTP$ANDERE^2
+    )
 
     # load unit for all substances in kg/yr (where concentration unit is known)
     indices_mgL <- which(x_conc$UnitsAbbreviation == "mg/L")
@@ -676,7 +720,12 @@ annual_load_rain <- function(data.dir, error_removal_rate = 0.3)
     error_load_summary_path$sep <- error_load_sep$TOT
     error_load_summary_path$CSO <- error_load_CSO$TOT
     error_load_summary_path$WWTP <- error_load_WWTP$TOT
-    error_load_summary_path$TOT <- sqrt(error_load_sep$TOT^2 + error_load_CSO$TOT^2 + error_load_WWTP$TOT^2)
+
+    error_load_summary_path$TOT <- sqrt(
+      error_load_sep$TOT^2 +
+      error_load_CSO$TOT^2 +
+      error_load_WWTP$TOT^2
+    )
 
     # summary by source catchment
     load_summary_catch <- load_sep
@@ -685,13 +734,17 @@ annual_load_rain <- function(data.dir, error_removal_rate = 0.3)
 
     # absolute error by source catchment
     error_load_summary_catch <- error_load_sep
-    error_load_summary_catch[, j] <- sqrt(error_load_sep[, j]^2 + error_load_CSO[, j]^2 + error_load_WWTP[, j]^2)
+    error_load_summary_catch[, j] <- sqrt(
+      error_load_sep[, j]^2 +
+      error_load_CSO[, j]^2 +
+      error_load_WWTP[, j]^2
+    )
 
     # organize in list
-    x_out_by_catchment_kg_yr[[EZG_names[i]]] <- load_summary_catch
-    x_out_by_pathway_kg_yr[[EZG_names[i]]] <- load_summary_path
-    error_by_catchment_kg_yr[[EZG_names[i]]] <- error_load_summary_catch
-    error_by_pathway_kg_yr[[EZG_names[i]]] <- error_load_summary_path
+    x_out_by_catchment_kg_yr[[EZG]] <- load_summary_catch
+    x_out_by_pathway_kg_yr[[EZG]] <- load_summary_path
+    error_by_catchment_kg_yr[[EZG]] <- error_load_summary_catch
+    error_by_pathway_kg_yr[[EZG]] <- error_load_summary_path
   }
 
   # output
@@ -758,19 +811,24 @@ annual_load_sewage <- function(
   sub_sew_info$Retention_. <- as.numeric(sub_sew_info$Retention_.)
 
   selected <- !is.na(sub_sew_info$CoutWWTP)
-  sub_sew_info <- sub_sew_info[selected,]
+  sub_sew_info <- sub_sew_info[selected, ]
 
   #set retention to zero, where information is lacking
   indices <- which(is.na(sub_sew_info$Retention_.))
   sub_sew_info$Retention_.[indices] <- 0
 
   #set relative error of substance concentrations (Cout)
-  if (error_conc == "individual") {
-    sub_sew_info$error_conc <- as.numeric(sub_sew_info$error_conc)
-  } else sub_sew_info$error_conc <- error_conc
+  sub_sew_info$error_conc <- if (error_conc == "individual") {
+    as.numeric(sub_sew_info$error_conc)
+  } else {
+    error_conc
+  }
 
   # order of catchments
-  sum_EZG <- stats::aggregate(vol_sewage$GESAMT, by = list(vol_sewage$SUW), FUN = "sum")
+  sum_EZG <- stats::aggregate(
+    vol_sewage$GESAMT, by = list(vol_sewage$SUW), FUN = "sum"
+  )
+
   indices <- order(sum_EZG$x, decreasing = TRUE)
   sum_EZG <- sum_EZG[indices,]
   EZG_names <- sum_EZG[,1]
@@ -784,20 +842,32 @@ annual_load_sewage <- function(
   x_out_by_pathway_kg_yr <- list()
   error_by_pathway_kg_yr <- list()
 
-  for (i in seq_along(EZG_names)) {
+  for (EZG in EZG_names) {
 
-    indices <- which(vol_sewage$SUW == EZG_names[i])
-    vol_sewage_EZG <- vol_sewage[indices,]
-    error_vol_sewage_EZG <- error_vol_sewage[indices,]
+    indices <- which(vol_sewage$SUW == EZG)
+
+    vol_sewage_EZG <- vol_sewage[indices, ]
+    error_vol_sewage_EZG <- error_vol_sewage[indices, ]
 
     # loads of sewage based substances per pathway
-    load_sew$CSO <- vol_sewage_EZG$GESAMT[1] * sub_sew_info$CoutWWTP / (1-sub_sew_info$Retention_./100)
+    load_sew$CSO <- vol_sewage_EZG$GESAMT[1] * sub_sew_info$CoutWWTP /
+      (1 - sub_sew_info$Retention_. / 100)
+
     load_sew$WWTP <- vol_sewage_EZG$GESAMT[2] * sub_sew_info$CoutWWTP
+
     load_sew$TOT <- load_sew$CSO + load_sew$WWTP
 
     # absolute errors in loads of sewage based substances per pathway
-    error_load_sew$CSO <- sqrt(error_vol_sewage_EZG$GESAMT[1]^2 + sub_sew_info$error_conc^2 + error_removal_rate^2)*load_sew$CSO
-    error_load_sew$WWTP <- sqrt(error_vol_sewage_EZG$GESAMT[2]^2 + sub_sew_info$error_conc^2)*load_sew$WWTP
+    error_load_sew$CSO <- load_sew$CSO * sqrt(
+      error_vol_sewage_EZG$GESAMT[1]^2 +
+      sub_sew_info$error_conc^2 +
+      error_removal_rate^2
+    )
+
+    error_load_sew$WWTP <- load_sew$WWTP * sqrt(
+      error_vol_sewage_EZG$GESAMT[2]^2 + sub_sew_info$error_conc^2
+    )
+
     error_load_sew$TOT <- sqrt(error_load_sew$CSO^2 + error_load_sew$WWTP^2)
 
     # load unit for all substances in kg/yr (where concentration unit is known)
@@ -811,8 +881,8 @@ annual_load_sewage <- function(
     error_load_sew[indices_ugL, -1] <- error_load_sew[indices_ugL, -1] / 1e6
 
     # organize in list
-    x_out_by_pathway_kg_yr[[EZG_names[i]]] <- load_sew
-    error_by_pathway_kg_yr[[EZG_names[i]]] <- error_load_sew
+    x_out_by_pathway_kg_yr[[EZG]] <- load_sew
+    error_by_pathway_kg_yr[[EZG]] <- error_load_sew
   }
 
   # output
@@ -1038,7 +1108,7 @@ annual_mean_conc_method1 <- function(x_in, x_out_mean, x_out_stdev, site_names)
     values <- x_in$DataValue[selected]
     BY <- list(x_in$VariableID[selected])
 
-    x_out_mean [[site_name]] <- stats::aggregate(
+    x_out_mean[[site_name]] <- stats::aggregate(
       values, by = BY, FUN = "mean"
     )[, 2]
 
@@ -1101,10 +1171,12 @@ annual_mean_conc_method2 <- function(
   x_rain_events$tEnd <- as.POSIXct(x_rain_events$tEnd)
 
   x_rain_events$quarter <- quarters(x_rain_events$tBeg)
+
   x_rain_events$quarter[which(x_rain_events$quarter == "Q1")] <- 1
   x_rain_events$quarter[which(x_rain_events$quarter == "Q2")] <- 2
   x_rain_events$quarter[which(x_rain_events$quarter == "Q3")] <- 3
   x_rain_events$quarter[which(x_rain_events$quarter == "Q4")] <- 4
+
   x_rain_events$quarter <- as.numeric(x_rain_events$quarter)
 
   indices <- which(x_rain_events$quarter == 2 | x_rain_events$quarter == 3)
@@ -1112,7 +1184,7 @@ annual_mean_conc_method2 <- function(
   #summer = 1
   x_rain_events$season[indices] <- 1
   #winter = 2
-  x_rain_events$season[-indices] <- 2
+  x_rain_events$season[- indices] <- 2
 
   #define functions
   functionName <- list(
@@ -1159,7 +1231,7 @@ annual_mean_conc_method2 <- function(
 
       args <- list(x = independent, A = A, B = B)
 
-      if (!is.na(C)) {
+      if (! is.na(C)) {
         args <- c(args, C = C, D = D)
       }
 
@@ -1189,18 +1261,23 @@ annual_mean_conc_method2 <- function(
       if (functionCode == "exp" | functionCode == "pot") {
         args <- list(x = independent, A = A, B = B, RMSE = RMSE)
       }
+
       if (functionCode == "log" | functionCode == "polynom") {
         args <- list(x = independent, B = B, RMSE = RMSE)
       }
+
       if (functionCode == "rcp") {
         args <- list(x = independent, A = A, RMSE = RMSE)
       }
+
       if (functionCode == "linear") {
         args <- list(B = B, RMSE = RMSE)
       }
+
       if (functionCode == "seasonal") {
         args <- list(x = independent, RMSE_A = RMSE_A, RMSE_B = RMSE_B)
       }
+
       if (functionCode == "quarterly") {
         args <- list(
           x = independent, RMSE_A = RMSE_A, RMSE_B = RMSE_B, RMSE_C = RMSE_C,
