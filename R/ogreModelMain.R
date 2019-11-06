@@ -509,29 +509,42 @@ annual_stats <- function(x_in)
 annual_load_rain <- function(data.dir, error_removal_rate = 0.3)
 {
   #load data
+  vol_rain <- utils::read.csv2(
+    file = get_path_or_stop(data.dir, "Vol_rain.csv", "rain runoff"),
+    stringsAsFactors = FALSE
+  )
 
-  if (file.exists(file.path(data.dir, "Vol_rain.csv"))) {
-  vol_rain <- utils::read.csv2(file=file.path(data.dir, "Vol_rain.csv"), stringsAsFactors=FALSE)
-  } else stop("File with rain runoff (Vol_rain.csv) not found in data.dir")
+  error_vol_rain <- utils::read.table(
+    file = get_path_or_stop(
+      data.dir, "Vol_rain_relative_error.csv", "rain runoff"
+    ),
+    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
+  )
 
-  if (file.exists(file.path(data.dir, "Vol_rain_relative_error.csv"))) {
-    error_vol_rain <- utils::read.table(file = file.path(data.dir, "Vol_rain_relative_error.csv"), sep = ";", dec = ".", stringsAsFactors=FALSE, header = TRUE)
-  } else stop("File with rain runoff (Vol_rain_relative_error.csv) not found in data.dir")
+  x_conc <- utils::read.table(
+    file = get_path_or_stop(
+      data.dir, "annual_mean_conc.csv", "annual mean concentrations"
+    ),
+    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
+  )
 
-  if (file.exists(file.path(data.dir, "annual_mean_conc.csv"))) {
-  x_conc <- utils::read.table(file = file.path(data.dir, "annual_mean_conc.csv"), sep = ";", dec = ".", stringsAsFactors=FALSE, header = TRUE)
-  } else stop("File with annual mean concentrations (annual_mean_conc.csv) not found in data.dir")
+  error_x_conc <- utils::read.table(
+    file = get_path_or_stop(
+      data.dir, "annual_mean_conc_relative_error.csv",
+      "annual mean concentrations"
+    ),
+    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
+  )
 
-  if (file.exists(file.path(data.dir, "annual_mean_conc_relative_error.csv"))) {
-    error_x_conc <- utils::read.table(file = file.path(data.dir, "annual_mean_conc_relative_error.csv"), sep = ";", dec = ".", stringsAsFactors=FALSE, header = TRUE)
-  } else stop("File with annual mean concentrations (annual_mean_conc_relative_error.csv) not found in data.dir")
-
-  if (file.exists(file.path(data.dir, "substance_info.csv"))) {
-  removal_rates <- utils::read.csv2(file=file.path(data.dir, "substance_info.csv"), header=TRUE, stringsAsFactors=FALSE)
-  } else stop("File with removal rates at WWTP (substance_info.csv) not found in data.dir")
+  removal_rates <- utils::read.csv2(
+    file = get_path_or_stop(
+      data.dir, "substance_info.csv", "removal rates at WWTP"
+    ),
+    header = TRUE, stringsAsFactors = FALSE
+  )
 
   # missing removal rates are set = 0
-  removal_rates[,2] <- as.numeric(removal_rates[, 2])
+  removal_rates[, 2] <- as.numeric(removal_rates[, 2])
   removal_rates[which(is.na(removal_rates$Retention_.)), 2] <- 0
 
   # get removal rates for substances in x_conc only (and in same order)
@@ -690,6 +703,19 @@ annual_load_rain <- function(data.dir, error_removal_rate = 0.3)
   )
 }
 
+# get_path_or_stop -------------------------------------------------------------
+get_path_or_stop <- function(data_dir, file_name, subject)
+{
+  file <- file.path(data_dir, file_name)
+
+  if (! file.exists(file)) stop(
+    sprintf("File with %s (%s) not found in data.dir", subject, file_name),
+    call. = FALSE
+  )
+
+  file
+}
+
 # annual_load_sewage -----------------------------------------------------------
 #' calculates the load for each substance
 #'
@@ -715,18 +741,24 @@ annual_load_sewage <- function(
 )
 {
   #load data
+  vol_sewage <- utils::read.table(
+    file = get_path_or_stop(data.dir, "Vol_sewage.csv", "sewage runoff"),
+    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
+  )
 
-  if (file.exists(file.path(data.dir, "Vol_sewage.csv"))) {
-    vol_sewage <- utils::read.table(file = file.path(data.dir, "Vol_sewage.csv"), sep = ";", dec = ".", stringsAsFactors=FALSE, header = TRUE)
-  } else stop("File with sewage runoff (Vol_sewage.csv) not found in data.dir")
+  error_vol_sewage <- utils::read.table(
+    file = get_path_or_stop(
+      data.dir, "Vol_sewage_relative_error.csv", "sewage runoff"
+    ),
+    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
+  )
 
-  if (file.exists(file.path(data.dir, "Vol_sewage_relative_error.csv"))) {
-    error_vol_sewage <- utils::read.table(file = file.path(data.dir, "Vol_sewage_relative_error.csv"), sep = ";", dec = ".", stringsAsFactors=FALSE, header = TRUE)
-  } else stop("File with sewage runoff (Vol_sewage_relative_error.csv) not found in data.dir")
-
-  if (file.exists(file.path(data.dir, "substance_info.csv"))) {
-    sub_sew_info <- utils::read.csv2(file=file.path(data.dir, "substance_info.csv"), header=TRUE, stringsAsFactors=FALSE)
-  } else stop("File with substance information WWTP (substance_info.csv) not found in data.dir")
+  sub_sew_info <- utils::read.csv2(
+    file = get_path_or_stop(
+      data.dir, "substance_info.csv", "substance information WWTP"
+    ),
+    header = TRUE, stringsAsFactors = FALSE
+  )
 
   # read substance information, discard substances with lacking info
   sub_sew_info$CoutWWTP <- as.numeric(sub_sew_info$CoutWWTP)
@@ -1029,15 +1061,21 @@ annual_mean_conc_method1 <- function(x_in, x_out_mean, x_out_stdev, site_names)
 #' @noRd
 annual_mean_conc_method2 <- function(x_out_mean, x_out_stdev, site_names, data.dir)
 {
-
   #read correlation info and rain series
-  if (file.exists(file.path(data.dir, "correlations_substances.csv"))) {
-    x_correlations <- utils::read.table(file = file.path(data.dir, "correlations_substances.csv"), sep = ";", dec = ".", stringsAsFactors=FALSE, header = TRUE, comment.char = "")
-  } else stop("File with rain runoff (correlations_substances.csv) not found in data.dir")
+  x_correlations <- utils::read.table(
+    file = get_path_or_stop(
+      data.dir, "correlations_substances.csv", "correlations"
+    ),
+    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE,
+    comment.char = ""
+  )
 
-  if (file.exists(file.path(data.dir, "RainEvents_1961_1990_Dahlem.csv"))) {
-    x_rain_events <- utils::read.table(file = file.path(data.dir, "RainEvents_1961_1990_Dahlem.csv"), sep = ";", dec = ".", stringsAsFactors=FALSE, header = TRUE)
-  } else stop("File with rain runoff (RainEvents_1961_1990_Dahlem.csv) not found in data.dir")
+  x_rain_events <- utils::read.table(
+    file = get_path_or_stop(
+      data.dir, "RainEvents_1961_1990_Dahlem.csv", "rain runoff"
+    ),
+    sep = ";", dec = ".", stringsAsFactors = FALSE, header = TRUE
+  )
 
   #keep only lines active for model calculations
   x_correlations <- x_correlations[which(x_correlations$active == "x"),]
