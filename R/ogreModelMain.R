@@ -17,45 +17,46 @@
 #' @importFrom kwb.odm odm_Units
 #' @importFrom kwb.odm odm_Variables
 #'
-get_lab_values <- function
-(
-  odbc_name
-)
+get_lab_values <- function(odbc_name)
 {
-  # Save current value of option "stringsAsFactors"
-  stringsAsFactors <- getOption("stringsAsFactors")
+  # Function returning a modified version of a kwb.odm-function. In the returned
+  # version, the function kwb.db::selectFromDb() will be called with
+  # "stringsAsFactors = FALSE".
+  no_factor_function <- function(FUN) {
+    function(...) FUN(..., stringsAsFactors = FALSE)
+  }
 
-  # Set option "stringsAsFactors"
-  options(stringsAsFactors = FALSE)
-
-  # Reset option "stringsAsFactors" on exit
-  on.exit(options(stringsAsFactors = stringsAsFactors))
+  get_sites <- no_factor_function(kwb.odm::odm_Sites)
+  get_variables <- no_factor_function(kwb.odm::odm_Variables)
+  get_samples <- no_factor_function(kwb.odm::odm_Samples)
+  get_values <- no_factor_function(kwb.odm::odm_DataValues)
+  get_units <- no_factor_function(kwb.odm::odm_Units)
 
   # get info from db
-  sites <- odm_Sites(db = odbc_name, select = 1:3)
+  sites <- get_sites(db = odbc_name, select = 1:3)
 
-  substances <- odm_Variables(db = odbc_name, select = c(1:3, 5))
+  substances <- get_variables(db = odbc_name, select = c(1:3, 5))
 
-  samples <- odm_Samples(db = odbc_name, select = 1:2)
+  samples <- get_samples(db = odbc_name, select = 1:2)
 
-  datavalues <- odm_DataValues(
+  values <- get_values(
     db = odbc_name, select = paste0(
       "ValueID, DataValue, LocalDateTime, DateTimeUTC, UTCOffset, ",
-      "SampleID, SiteID, VariableID,CensorCode, QualityControlLevelID"
+      "SampleID, SiteID, VariableID, CensorCode, QualityControlLevelID"
     ),
     orderBy_QualityControlLevelID = 1,
     as.is = TRUE # keep dates and times as character
   )
 
   # Explicitly convert character to POSIXct
-  datavalues$LocalDateTime <- as.POSIXct(datavalues$LocalDateTime, tz = "Europe/Berlin")
-  datavalues$DateTimeUTC <- as.POSIXct(datavalues$DateTimeUTC, tz = "UTC")
+  values$LocalDateTime <- as.POSIXct(values$LocalDateTime, tz = "Europe/Berlin")
+  values$DateTimeUTC <- as.POSIXct(values$DateTimeUTC, tz = "UTC")
 
-  units_variables <- odm_Units(db = odbc_name, select = c(1, 4))
+  units_variables <- get_units(db = odbc_name, select = c(1, 4))
 
   # merge info in one data.frame
 
-  x_all <- merge(datavalues, sites, by = "SiteID")
+  x_all <- merge(values, sites, by = "SiteID")
 
   x_all <- merge(x_all, substances, by = "VariableID")
 
