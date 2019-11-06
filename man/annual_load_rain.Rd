@@ -8,8 +8,8 @@ annual_load_rain(data.dir, error_removal_rate = 0.3)
 }
 \arguments{
 \item{data.dir}{path of model data (annual mean concentrations
-"annual_mean_conc.csv",  rain runoff volumes "Vol_rain.csv", removal at WWTP
-"substance_info.csv")}
+"annual_mean_conc.csv",  rain runoff volumes "Vol_rain.csv", removal at
+WWTP "substance_info.csv")}
 
 \item{error_removal_rate}{relative error in removal at WWTP}
 }

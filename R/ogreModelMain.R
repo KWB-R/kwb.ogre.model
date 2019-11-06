@@ -74,13 +74,11 @@ get_lab_values <- function(odbc_name)
     ValueID ~ SampleID + VariableID, data = x_all, FUN = length
   )
 
-  indices <- which(y[, 3] > 1)
-
   y2 <- stats::aggregate(
     ValueID ~ SampleID + VariableID, data = x_all, FUN = "[", 1
   )
 
-  ValueIDs_LQ <- y2$ValueID[indices]
+  ValueIDs_LQ <- y2$ValueID[which(y[, 3] > 1)]
 
   indices_LQ <- match(ValueIDs_LQ, x_all$ValueID)
 
@@ -115,7 +113,7 @@ only_new_dl_metals <- function(x_in)
     )
 
     if (length(indices) > 0) {
-      x_in <- x_in[-indices,]
+      x_in <- x_in[- indices, ]
     }
   }
 
@@ -142,12 +140,11 @@ only_composite <- function(x_in)
 #' @export
 remove_group <- function(x_in, group)
 {
-  ogreVariables <- kwb.ogre::OGRE_VARIABLES()
+  variables <- kwb.ogre::OGRE_VARIABLES()
 
-  ogreVariableCodes <- ogreVariables$VariableCode[
-    ogreVariables$VariableGroupName == paste(group)]
+  codes <- variables$VariableCode[variables$VariableGroupName == paste(group)]
 
-  x_in[which(x_in$VariableCode %in% ogreVariableCodes == "FALSE"), ]
+  x_in[which(x_in$VariableCode %in% codes == "FALSE"), ]
 }
 
 # no_Panke ---------------------------------------------------------------------
@@ -206,7 +203,7 @@ only_representative_subst <- function(x_in)
 
     if (sum(site_match) < length(siteIDs)) {
 
-      x_in <- x_in[-indices,]
+      x_in <- x_in[- indices, ]
     }
   }
 
@@ -233,7 +230,7 @@ non_detect <- function(x_in)
   #find substances which are < dl in all samples
   indices_lt <- which(x_in$CensorCode == "lt")
   subst_lt <- unique(x_in$VariableName[indices_lt])
-  subst_nc <- unique(x_in$VariableName[-indices_lt])
+  subst_nc <- unique(x_in$VariableName[- indices_lt])
   subst_lt <- setdiff(subst_lt,subst_nc)
   mat_nodetect[seq_along(subst_lt), 1] <- subst_lt
   max_length <- length(subst_lt)
@@ -246,21 +243,18 @@ non_detect <- function(x_in)
     indices_nc <- which(x_in$CensorCode == "nc" & x_in$SiteID == site_IDs[i])
     subst_lt <- unique(x_in$VariableName[indices_lt])
     subst_nc <- unique(x_in$VariableName[indices_nc])
-    subst_lt <- setdiff(subst_lt,subst_nc)
+    subst_lt <- setdiff(subst_lt, subst_nc)
     mat_nodetect[seq_along(subst_lt), i + 1] <- subst_lt
     max_length <- max(length(subst_lt), max_length)
   }
 
   mat_nodetect <- mat_nodetect[seq_len(max_length), ]
 
-  tab_non_detect <- as.data.frame(mat_nodetect, stringsAsFactors = FALSE)
+  non_detected <- as.data.frame(mat_nodetect, stringsAsFactors = FALSE)
 
-  indices <- match(site_IDs, x_in$SiteID)
-  site_names <- x_in$SiteCode[indices]
+  site_names <- x_in$SiteCode[match(site_IDs, x_in$SiteID)]
 
-  colnames(tab_non_detect) <- c("All_sites", site_names[seq_along(site_names)])
-
-  tab_non_detect
+  stats::setNames(non_detected, c("All_sites", site_names))
 }
 
 # detect -----------------------------------------------------------------------
