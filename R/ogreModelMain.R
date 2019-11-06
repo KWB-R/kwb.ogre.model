@@ -93,31 +93,26 @@ get_lab_values <- function(odbc_name)
 #' @param x_in name of input data.frame
 #'
 #' @export
-only_new_dl_metals <- function
-(
-  x_in
-)
+only_new_dl_metals <- function(x_in)
 {
   # get detection limits that were lowered during project
   DL_metals_new <- getNewDetectionLimits()
 
   # delete samples below detection limit, where detection limit is higher than current
-  for(i in 1:length(DL_metals_new$VariableCode)) {
+  for (i in seq_along(DL_metals_new$VariableCode)) {
 
-    indices <- which(x_in$VariableCode == DL_metals_new[i,1] &
-                       x_in$CensorCode == "lt" &
-                       x_in$DataValue > DL_metals_new[i,2])
+    indices <- which(
+      x_in$VariableCode == DL_metals_new[i, 1] &
+      x_in$CensorCode == "lt" &
+      x_in$DataValue > DL_metals_new[i, 2]
+    )
 
     if (length(indices) > 0) {
-
       x_in <- x_in[-indices,]
-
     }
-
   }
 
   x_in
-
 }
 
 # only_composite ---------------------------------------------------------------
@@ -126,13 +121,9 @@ only_new_dl_metals <- function
 #' @param x_in name of input data.frame
 #'
 #' @export
-only_composite <- function
-(
-  x_in
-)
+only_composite <- function(x_in)
 {
-  indices <- which(x_in$SampleType == "Composite")
-  x_in[indices,]
+  x_in[which(x_in$SampleType == "Composite"), ]
 }
 
 # remove_group -----------------------------------------------------------------
@@ -142,20 +133,14 @@ only_composite <- function
 #' @param group Variable group to be removed (string)
 #'
 #' @export
-remove_group <- function
-(
-  x_in,
-  group
-)
+remove_group <- function(x_in, group)
 {
   ogreVariables <- kwb.ogre::OGRE_VARIABLES()
 
   ogreVariableCodes <- ogreVariables$VariableCode[
     ogreVariables$VariableGroupName == paste(group)]
 
-  indices <- which(x_in$VariableCode %in% ogreVariableCodes == "FALSE")
-
-  x_in[indices,]
+  x_in[which(x_in$VariableCode %in% ogreVariableCodes == "FALSE"), ]
 }
 
 # no_Panke ---------------------------------------------------------------------
@@ -164,14 +149,9 @@ remove_group <- function
 #' @param x_in name of input data.frame
 #'
 #' @export
-no_Panke <- function
-(
-  x_in
-)
+no_Panke <- function(x_in)
 {
-  indices <- which(x_in$SiteCode != "PNK")
-
-  x_in[indices,]
+  x_in[which(x_in$SiteCode != "PNK"), ]
 }
 
 # Panke ------------------------------------------------------------------------
@@ -180,14 +160,9 @@ no_Panke <- function
 #' @param x_in name of input data.frame
 #'
 #' @export
-Panke <- function
-(
-  x_in
-)
+Panke <- function(x_in)
 {
-  indices <- which(x_in$SiteCode == "PNK")
-
-  x_in[indices,]
+  x_in[which(x_in$SiteCode == "PNK"), ]
 }
 
 # reduce_codes -----------------------------------------------------------------
@@ -198,14 +173,9 @@ Panke <- function
 #' @param x_in name of input data.frame
 #'
 #' @export
-reduce_codes <- function
-(
-  x_in
-)
+reduce_codes <- function(x_in)
 {
-  indices_OK <- which(x_in$CensorCode %in% c("lt", "nc"))
-
-  x_in[indices_OK,]
+  x_in[which(x_in$CensorCode %in% c("lt", "nc")), ]
 }
 
 # only_representative_subst ----------------------------------------------------
@@ -217,18 +187,18 @@ reduce_codes <- function
 #' @param x_in name of input data.frame
 #'
 #' @export
-only_representative_subst <- function
-(
-  x_in
-)
+only_representative_subst <- function(x_in)
 {
   VariableIDs <- unique(x_in$VariableID)
   siteIDs <- unique(x_in$SiteID)
 
-  for (i in 1:length(VariableIDs)) {
+  for (i in seq_along(VariableIDs)) {
+
     indices <- which(x_in$VariableID == VariableIDs[i])
     site_match <- siteIDs %in% x_in$SiteID[indices]
+
     if (sum(site_match) < length(siteIDs)) {
+
       x_in <- x_in[-indices,]
     }
   }
@@ -245,10 +215,7 @@ only_representative_subst <- function
 #' @param x_in name of input data.frame
 #'
 #' @export
-non_detect <- function
-(
-  x_in
-)
+non_detect <- function(x_in)
 {
   site_IDs <- unique(x_in$SiteID)
   y <- order(site_IDs)
@@ -261,29 +228,30 @@ non_detect <- function
   subst_lt <- unique(x_in$VariableName[indices_lt])
   subst_nc <- unique(x_in$VariableName[-indices_lt])
   subst_lt <- setdiff(subst_lt,subst_nc)
-  mat_nodetect[1:length(subst_lt),1] <- subst_lt
+  mat_nodetect[seq_along(subst_lt), 1] <- subst_lt
   max_length <- length(subst_lt)
 
   #find substances which are < dl for all samples of one site
 
-  for (i in 1:length(site_IDs)) {
+  for (i in seq_along(site_IDs)) {
+
     indices_lt <- which(x_in$CensorCode == "lt" & x_in$SiteID == site_IDs[i])
     indices_nc <- which(x_in$CensorCode == "nc" & x_in$SiteID == site_IDs[i])
     subst_lt <- unique(x_in$VariableName[indices_lt])
     subst_nc <- unique(x_in$VariableName[indices_nc])
     subst_lt <- setdiff(subst_lt,subst_nc)
-    mat_nodetect[1:length(subst_lt),i+1] <- subst_lt
+    mat_nodetect[seq_along(subst_lt), i + 1] <- subst_lt
     max_length <- max(length(subst_lt), max_length)
   }
 
-  mat_nodetect <- mat_nodetect[1:max_length,]
+  mat_nodetect <- mat_nodetect[seq_len(max_length), ]
 
-  tab_non_detect <- as.data.frame(mat_nodetect, stringsAsFactors=FALSE)
+  tab_non_detect <- as.data.frame(mat_nodetect, stringsAsFactors = FALSE)
 
   indices <- match(site_IDs, x_in$SiteID)
   site_names <- x_in$SiteCode[indices]
 
-  colnames(tab_non_detect) <- c("All_sites", site_names[1:length(site_names)])
+  colnames(tab_non_detect) <- c("All_sites", site_names[seq_along(site_names)])
 
   tab_non_detect
 }
@@ -298,15 +266,9 @@ non_detect <- function
 #'
 #'
 #' @export
-detect <- function
-(
-  x_in,
-  x_nd
-)
+detect <- function(x_in, x_nd)
 {
-  y <- match(x_in$VariableName, x_nd)
-  indices <- which(is.na(y))
-  x_in[indices,]
+  x_in[which(is.na(match(x_in$VariableName, x_nd))), ]
 }
 
 # adapt_nondetect --------------------------------------------------------------
@@ -321,16 +283,12 @@ detect <- function
 #' @param factor multiplier of detection limit if smaller dl (e.g., 0, 0.5 or 1)
 #'
 #' @export
-adapt_nondetect <- function
-(
-  x_in,
-  x_nd,
-  factor = 0.5
-)
+adapt_nondetect <- function(x_in, x_nd, factor = 0.5)
 {
   site_names <- colnames(x_nd)[-1]
 
-  for (i in 1:(dim(x_nd)[2]-1)) {
+  for (i in seq_len(dim(x_nd)[2]-1)) {
+
     #set samples <dl for substances which are never detected = 0
     y <- match(x_in$VariableName, x_nd[,i+1])
     indices <- which(x_in$SiteCode == site_names[i] & y > 0)
@@ -362,12 +320,7 @@ adapt_nondetect <- function
 #'   method 2 are located
 #'
 #' @export
-annual_mean_conc <- function
-(
-  x_in,
-  method,
-  data.dir
-)
+annual_mean_conc <- function(x_in, method, data.dir)
 {
   #order by VariableID
   y <- order(x_in$VariableID)
@@ -381,37 +334,49 @@ annual_mean_conc <- function
   site_names <- x_in$SiteCode[indices]
 
   #output structure
-  x_out_mean <- data.frame(VariableID=unique(x_in$VariableID),
-                           VariableName=unique(x_in$VariableName),
-                           stringsAsFactors=FALSE)
+  x_out_mean <- data.frame(
+    VariableID = unique(x_in$VariableID),
+    VariableName = unique(x_in$VariableName),
+    stringsAsFactors = FALSE
+  )
+
   indices <- match(x_out_mean$VariableID, x_in$VariableID)
   x_out_mean$UnitsAbbreviation <- x_in$UnitsAbbreviation[indices]
 
   x_out_stdev <- x_out_mean
 
-
   if (method == 1) {
 
     #apply method 1 (arithmetic mean for all sites)
-    x_out <- annual_mean_conc_method1(x_in = x_in, x_out_mean = x_out_mean,
-                                   x_out_stdev = x_out_stdev, site_names = site_names)
+    x_out <- annual_mean_conc_method1(
+      x_in = x_in,
+      x_out_mean = x_out_mean,
+      x_out_stdev = x_out_stdev,
+      site_names = site_names
+    )
 
   } else if (method == 2) {
 
     #apply method 1 (arithmetic mean for all sites), 1st step
-    x_out_method1 <- annual_mean_conc_method1(x_in = x_in, x_out_mean = x_out_mean,
-                                   x_out_stdev = x_out_stdev, site_names = site_names)
+    x_out_method1 <- annual_mean_conc_method1(
+      x_in = x_in,
+      x_out_mean = x_out_mean,
+      x_out_stdev = x_out_stdev,
+      site_names = site_names
+    )
 
     #apply method 2 (replace method 1 where correlations exist)
 
-    x_out <- annual_mean_conc_method2(x_out_mean = x_out_method1$mean,
-                                      x_out_stdev = x_out_method1$stdev,
-                                      site_names = site_names,
-                                      data.dir = data.dir)
+    x_out <- annual_mean_conc_method2(
+      x_out_mean = x_out_method1$mean,
+      x_out_stdev = x_out_method1$stdev,
+      site_names = site_names,
+      data.dir = data.dir
+    )
 
+  } else {
 
-    } else {
-    paste("method is not established yet")
+    stop("method is not established yet")
   }
 
   x_out
@@ -465,10 +430,7 @@ default_statistics <- function(x)
 #' @importFrom dplyr arrange
 #' @importFrom rlang .data
 #' @export
-annual_stats <- function
-(
-  x_in
-)
+annual_stats <- function(x_in)
 {
   # Provide vector of SiteCodes ordered by their SiteID
   site_names <- (x_in %>%
@@ -544,13 +506,8 @@ annual_stats <- function
 #' left unchanged, resulting in "unit * m3/yr".
 #'
 #' @export
-annual_load_rain <- function
-(
-  data.dir,
-  error_removal_rate = 0.3
-)
+annual_load_rain <- function(data.dir, error_removal_rate = 0.3)
 {
-
   #load data
 
   if (file.exists(file.path(data.dir, "Vol_rain.csv"))) {
@@ -574,11 +531,11 @@ annual_load_rain <- function
   } else stop("File with removal rates at WWTP (substance_info.csv) not found in data.dir")
 
   # missing removal rates are set = 0
-  removal_rates[,2] <- as.numeric(removal_rates[,2])
-  removal_rates[which(is.na(removal_rates$Retention_.)),2] <- 0
+  removal_rates[,2] <- as.numeric(removal_rates[, 2])
+  removal_rates[which(is.na(removal_rates$Retention_.)), 2] <- 0
 
   # get removal rates for substances in x_conc only (and in same order)
-  removal_rates_red <- x_conc[,1:2]
+  removal_rates_red <- x_conc[, 1:2]
   indices <- match(removal_rates_red$VariableName, removal_rates$VariableName)
   removal_rates_red$removal_percent <- removal_rates$Retention_.[indices]
 
@@ -604,7 +561,7 @@ annual_load_rain <- function
   x_out_by_pathway_kg_yr <- list()
   error_by_pathway_kg_yr <- list()
 
-  for (i in 1:length(EZG_names)) {
+  for (i in seq_along(EZG_names)) {
 
     indices <- which(vol_rain$SUW == EZG_names[i])
     vol_rain_EZG <- vol_rain[indices,]
@@ -630,7 +587,6 @@ annual_load_rain <- function
     error_load_sep$TOT <- sqrt(error_load_sep$ALT^2 + error_load_sep$NEU^2 + error_load_sep$STR^2 + error_load_sep$EFH^2 +
       error_load_sep$GEW^2 + error_load_sep$ANDERE^2)
 
-
     # loads of rain-water based substances via CSO
     load_CSO$ALT <- x_conc$ALT * vol_rain_EZG$ALT[2]
     load_CSO$NEU <- x_conc$NEU * vol_rain_EZG$NEU[2]
@@ -650,7 +606,6 @@ annual_load_rain <- function
     error_load_CSO$ANDERE <- sqrt(error_x_conc$ANDERE^2 + error_vol_rain_EZG$ANDERE[2]^2)*load_CSO$ANDERE
     error_load_CSO$TOT <- sqrt(error_load_CSO$ALT^2 + error_load_CSO$NEU^2 + error_load_CSO$STR^2 + error_load_CSO$EFH^2 +
                                  error_load_CSO$GEW^2 + error_load_CSO$ANDERE^2)
-
 
     # loads of rain-water based substances via WWTP
     load_WWTP$ALT <- x_conc$ALT * vol_rain_EZG$ALT[3] * (1-removal_rates_red$removal_percent/100)
@@ -676,27 +631,28 @@ annual_load_rain <- function
     indices_mgL <- which(x_conc$UnitsAbbreviation == "mg/L")
     indices_ugL <- which(x_conc$UnitsAbbreviation == "ug/L")
 
-    load_sep[indices_mgL,-(1:2)] <- load_sep[indices_mgL,-(1:2)] / 1000
-    load_sep[indices_ugL,-(1:2)] <- load_sep[indices_ugL,-(1:2)] / 1e6
+    skip2 <- -(1:2)
 
-    load_CSO[indices_mgL,-(1:2)] <- load_CSO[indices_mgL,-(1:2)] / 1000
-    load_CSO[indices_ugL,-(1:2)] <- load_CSO[indices_ugL,-(1:2)] / 1e6
+    load_sep[indices_mgL, skip2] <- load_sep[indices_mgL, skip2] / 1000
+    load_sep[indices_ugL, skip2] <- load_sep[indices_ugL, skip2] / 1e6
 
-    load_WWTP[indices_mgL,-(1:2)] <- load_WWTP[indices_mgL,-(1:2)] / 1000
-    load_WWTP[indices_ugL,-(1:2)] <- load_WWTP[indices_ugL,-(1:2)] / 1e6
+    load_CSO[indices_mgL, skip2] <- load_CSO[indices_mgL, skip2] / 1000
+    load_CSO[indices_ugL, skip2] <- load_CSO[indices_ugL, skip2] / 1e6
 
-    error_load_sep[indices_mgL,-(1:2)] <- error_load_sep[indices_mgL,-(1:2)] / 1000
-    error_load_sep[indices_ugL,-(1:2)] <- error_load_sep[indices_ugL,-(1:2)] / 1e6
+    load_WWTP[indices_mgL, skip2] <- load_WWTP[indices_mgL, skip2] / 1000
+    load_WWTP[indices_ugL, skip2] <- load_WWTP[indices_ugL, skip2] / 1e6
 
-    error_load_CSO[indices_mgL,-(1:2)] <- error_load_CSO[indices_mgL,-(1:2)] / 1000
-    error_load_CSO[indices_ugL,-(1:2)] <- error_load_CSO[indices_ugL,-(1:2)] / 1e6
+    error_load_sep[indices_mgL, skip2] <- error_load_sep[indices_mgL, skip2] / 1000
+    error_load_sep[indices_ugL, skip2] <- error_load_sep[indices_ugL, skip2] / 1e6
 
-    error_load_WWTP[indices_mgL,-(1:2)] <- error_load_WWTP[indices_mgL,-(1:2)] / 1000
-    error_load_WWTP[indices_ugL,-(1:2)] <- error_load_WWTP[indices_ugL,-(1:2)] / 1e6
+    error_load_CSO[indices_mgL, skip2] <- error_load_CSO[indices_mgL, skip2] / 1000
+    error_load_CSO[indices_ugL, skip2] <- error_load_CSO[indices_ugL, skip2] / 1e6
 
+    error_load_WWTP[indices_mgL, skip2] <- error_load_WWTP[indices_mgL, skip2] / 1000
+    error_load_WWTP[indices_ugL, skip2] <- error_load_WWTP[indices_ugL, skip2] / 1e6
 
     # summary by pathway
-    load_summary_path <- x_conc[,1:2]
+    load_summary_path <- x_conc[, 1:2]
     load_summary_path$sep <- load_sep$TOT
     load_summary_path$CSO <- load_CSO$TOT
     load_summary_path$WWTP <- load_WWTP$TOT
@@ -711,27 +667,27 @@ annual_load_rain <- function
 
     # summary by source catchment
     load_summary_catch <- load_sep
-    load_summary_catch[,3:9] <- load_sep[,3:9] + load_CSO[,3:9] + load_WWTP[,3:9]
+    j <- 3:9
+    load_summary_catch[, j] <- load_sep[, j] + load_CSO[, j] + load_WWTP[, j]
 
     # absolute error by source catchment
     error_load_summary_catch <- error_load_sep
-    error_load_summary_catch[,3:9] <- sqrt(error_load_sep[,3:9]^2 + error_load_CSO[,3:9]^2 + error_load_WWTP[,3:9]^2)
+    error_load_summary_catch[, j] <- sqrt(error_load_sep[, j]^2 + error_load_CSO[, j]^2 + error_load_WWTP[, j]^2)
 
     # organize in list
     x_out_by_catchment_kg_yr[[EZG_names[i]]] <- load_summary_catch
     x_out_by_pathway_kg_yr[[EZG_names[i]]] <- load_summary_path
     error_by_catchment_kg_yr[[EZG_names[i]]] <- error_load_summary_catch
     error_by_pathway_kg_yr[[EZG_names[i]]] <- error_load_summary_path
-
   }
 
-
   # output
-  list(by_path = x_out_by_pathway_kg_yr,
-       error_by_path = error_by_pathway_kg_yr,
-       by_catch = x_out_by_catchment_kg_yr,
-       error_by_catch = error_by_catchment_kg_yr)
-
+  list(
+    by_path = x_out_by_pathway_kg_yr,
+    error_by_path = error_by_pathway_kg_yr,
+    by_catch = x_out_by_catchment_kg_yr,
+    error_by_catch = error_by_catchment_kg_yr
+  )
 }
 
 # annual_load_sewage -----------------------------------------------------------
@@ -754,11 +710,8 @@ annual_load_rain <- function
 #' left unchanged, resulting in "unit * m3/yr".
 #'
 #' @export
-annual_load_sewage <- function
-(
-  data.dir,
-  error_removal_rate = 0.3,
-  error_conc = 0.5
+annual_load_sewage <- function(
+  data.dir, error_removal_rate = 0.3, error_conc = 0.5
 )
 {
   #load data
@@ -806,7 +759,7 @@ annual_load_sewage <- function
   x_out_by_pathway_kg_yr <- list()
   error_by_pathway_kg_yr <- list()
 
-  for (i in 1:length(EZG_names)) {
+  for (i in seq_along(EZG_names)) {
 
     indices <- which(vol_sewage$SUW == EZG_names[i])
     vol_sewage_EZG <- vol_sewage[indices,]
@@ -835,13 +788,13 @@ annual_load_sewage <- function
     # organize in list
     x_out_by_pathway_kg_yr[[EZG_names[i]]] <- load_sew
     error_by_pathway_kg_yr[[EZG_names[i]]] <- error_load_sew
-
   }
 
   # output
-  list(by_path = x_out_by_pathway_kg_yr,
-       error_by_path = error_by_pathway_kg_yr)
-
+  list(
+    by_path = x_out_by_pathway_kg_yr,
+    error_by_path = error_by_pathway_kg_yr
+  )
 }
 
 # getNewDetectionLimits --------------------------------------------------------
@@ -849,9 +802,9 @@ annual_load_sewage <- function
 #'
 #' that changed (lowered) during the monitoring
 #'
+#' @return data frame with columns \code{VariableCode}, \code{DetectionLimit}
 #' @export
-getNewDetectionLimits <- function
-()
+getNewDetectionLimits <- function()
 {
   detectionLimits.vector <- c(
     Pb = 0.5,
@@ -861,12 +814,11 @@ getNewDetectionLimits <- function
     V  = 0.1
   )
 
-  detectionLimits <- data.frame(
+  data.frame(
     VariableCode = names(detectionLimits.vector),
     DetectionLimit = as.numeric(detectionLimits.vector),
     stringsAsFactors = FALSE
   )
-  ### data frame with columns VariableCode, DetectionLimit
 }
 
 # quant25 ----------------------------------------------------------------------
@@ -910,8 +862,7 @@ quant95<-function(x)
 #' @export
 geom_mean <- function (x)
 {
-  a <- exp(mean(log(x))) # same result as prod(x) ^ (1/length(x))
-  return(a)
+  exp(mean(log(x))) # same result as prod(x) ^ (1/length(x))
 }
 
 # myFunction_exp ---------------------------------------------------------------
@@ -927,7 +878,7 @@ myFunction_exp <- function(x, A, B)
 #' @noRd
 myErrorFunction_exp <- function(x, A, B, RMSE)
 {
-  exp(B * x + A)*B*RMSE
+  exp(B * x + A) * B * RMSE
 }
 
 # myFunction_linear ------------------------------------------------------------
@@ -959,7 +910,7 @@ myFunction_pot <- function(x, A, B)
 #' @noRd
 myErrorFunction_pot <- function(x, A, B, RMSE)
 {
-  A * B * x^(B-1) * RMSE
+  A * B * x^(B - 1) * RMSE
 }
 
 # myFunction_rcp ---------------------------------------------------------------
@@ -967,7 +918,7 @@ myErrorFunction_pot <- function(x, A, B, RMSE)
 #' @noRd
 myFunction_rcp <- function(x, A, B)
 {
-  A/x + B
+  A / x + B
 }
 
 # myErrorFunction_rcp ----------------------------------------------------------
@@ -975,7 +926,7 @@ myFunction_rcp <- function(x, A, B)
 #' @noRd
 myErrorFunction_rcp <- function(x, A, RMSE)
 {
-  -A/(x^2) * RMSE
+  - A / (x^2) * RMSE
 }
 
 # myFunction_log ---------------------------------------------------------------
@@ -991,7 +942,7 @@ myFunction_log <- function(x, A, B)
 #' @noRd
 myErrorFunction_log <- function(x, B, RMSE)
 {
-  B/x * RMSE
+  B / x * RMSE
 }
 
 # myFunction_polynom -----------------------------------------------------------
@@ -1015,7 +966,7 @@ myErrorFunction_polynom <- function(x, B, RMSE)
 #' @noRd
 myFunction_seasonal <- function(x, A, B)
 {
-  c(A,B)[x]
+  c(A, B)[x]
 }
 
 # myErrorFunction_seasonal -----------------------------------------------------
@@ -1023,7 +974,7 @@ myFunction_seasonal <- function(x, A, B)
 #' @noRd
 myErrorFunction_seasonal <- function(x, RMSE_A, RMSE_B)
 {
-  c(RMSE_A,RMSE_B)[x]
+  c(RMSE_A, RMSE_B)[x]
 }
 
 # myFunction_quarterly ---------------------------------------------------------
@@ -1031,7 +982,7 @@ myErrorFunction_seasonal <- function(x, RMSE_A, RMSE_B)
 #' @noRd
 myFunction_quarterly <- function(x, A, B, C, D)
 {
-  c(A,B,C,D)[x]
+  c(A, B, C, D)[x]
 }
 
 # myErrorFunction_quarterly ----------------------------------------------------
@@ -1039,7 +990,7 @@ myFunction_quarterly <- function(x, A, B, C, D)
 #' @noRd
 myErrorFunction_quarterly <- function(x, RMSE_A, RMSE_B, RMSE_C, RMSE_D)
 {
-  c(RMSE_A,RMSE_B,RMSE_C,RMSE_D)[x]
+  c(RMSE_A, RMSE_B, RMSE_C, RMSE_D)[x]
 }
 
 # ln ---------------------------------------------------------------------------
@@ -1062,19 +1013,18 @@ annual_mean_conc_method1 <- function(x_in, x_out_mean, x_out_stdev, site_names)
     values <- x_in$DataValue[selected]
     BY <- list(x_in$VariableID[selected])
 
-    x_out_mean [[site_name]] <- stats::aggregate(values, by=BY, FUN="mean")[,2]
-    x_out_stdev[[site_name]] <- stats::aggregate(values, by=BY, FUN="sd")[,2]
-
+    x_out_mean [[site_name]] <- stats::aggregate(values, by = BY, FUN = "mean")[, 2]
+    x_out_stdev[[site_name]] <- stats::aggregate(values, by = BY, FUN = "sd")[, 2]
   }
 
   list(
     mean = x_out_mean,
-    stdev = x_out_stdev)
-
+    stdev = x_out_stdev
+  )
 }
 
 # annual_mean_conc_method2 -----------------------------------------------------
-#' @importFrom kwb.utils hsRenameColumns
+#' @importFrom kwb.utils renameColumns
 #' @keywords internal
 #' @noRd
 annual_mean_conc_method2 <- function(x_out_mean, x_out_stdev, site_names, data.dir)
@@ -1098,20 +1048,22 @@ annual_mean_conc_method2 <- function(x_out_mean, x_out_stdev, site_names, data.d
   x_correlations$VariableName <- variables$VariableName[indices]
 
   #change column names in rain vents to match names of independents
-  x_rain_events <- hsRenameColumns(dframe = x_rain_events, renames = list(
-    "mean" = "RImean",
-    "max" = "RImax",
-    "sum" = "RD",
-    "dur" = "DUR",
-    "pBefore" = "DWP"))
+  x_rain_events <- kwb.utils::renameColumns(
+    dframe = x_rain_events, renames = list(
+      "mean" = "RImean",
+      "max" = "RImax",
+      "sum" = "RD",
+      "dur" = "DUR",
+      "pBefore" = "DWP"
+  ))
 
   #remove rain events with value lower than threshold in mm
   indices <- which(x_rain_events$RD > 0.8)
   x_rain_events <- x_rain_events[indices,]
 
   #change unit from s to h
-  x_rain_events$DUR <- x_rain_events$DUR/3600
-  x_rain_events$DWP <- x_rain_events$DWP/3600
+  x_rain_events$DUR <- x_rain_events$DUR / 3600
+  x_rain_events$DWP <- x_rain_events$DWP / 3600
 
   #add season and quarters to rain events
   x_rain_events$tBeg <- as.POSIXct(x_rain_events$tBeg)
@@ -1164,7 +1116,7 @@ annual_mean_conc_method2 <- function(x_out_mean, x_out_stdev, site_names, data.d
     x_by_site <- x_correlations[indices,]
 
     #one correlation at a time for site_name
-    for (i in 1:length(x_by_site$VariableName)) {
+    for (i in seq_along(x_by_site$VariableName)) {
 
       #parametrisation for correlation function
       functionCode <- x_by_site$FunctionCode[i]
@@ -1217,8 +1169,10 @@ annual_mean_conc_method2 <- function(x_out_mean, x_out_stdev, site_names, data.d
         args <- list(x = independent, RMSE_A = RMSE_A, RMSE_B = RMSE_B)
       }
       if (functionCode == "quarterly") {
-        args <- list(x = independent, RMSE_A = RMSE_A, RMSE_B = RMSE_B,
-                     RMSE_C = RMSE_C, RMSE_D = RMSE_D)
+        args <- list(
+          x = independent, RMSE_A = RMSE_A, RMSE_B = RMSE_B, RMSE_C = RMSE_C,
+          RMSE_D = RMSE_D
+        )
       }
 
       #application error function i
@@ -1230,15 +1184,14 @@ annual_mean_conc_method2 <- function(x_out_mean, x_out_stdev, site_names, data.d
       #calculate standard deviation of annual mean
       x_rain_events$dC_times_RD <- x_rain_events$deltaC*x_rain_events$RD
 
-      x_out_stdev[[site_name]][indices_out] <- sqrt(sum(x_rain_events$dC_times_RD^2, na.rm = TRUE))/
+      x_out_stdev[[site_name]][indices_out] <-
+        sqrt(sum(x_rain_events$dC_times_RD^2, na.rm = TRUE)) /
         sum(x_rain_events$RD, na.rm = TRUE)
-
     }
-
   }
 
   list(
     mean = x_out_mean,
-    stdev = x_out_stdev)
-
+    stdev = x_out_stdev
+  )
 }

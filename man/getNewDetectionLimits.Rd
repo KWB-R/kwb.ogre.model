@@ -6,6 +6,9 @@
 \usage{
 getNewDetectionLimits()
 }
+\value{
+data frame with columns \code{VariableCode}, \code{DetectionLimit}
+}
 \description{
 that changed (lowered) during the monitoring
 }
