@@ -60,7 +60,9 @@ get_lab_values <- function(odbc_name)
 
   x_all <- merge(x_all, substances, by = "VariableID")
 
-  x_all <- merge(x_all, units_variables, by.x = "VariableUnitsID", by.y = "UnitsID")
+  x_all <- merge(
+    x_all, units_variables, by.x = "VariableUnitsID", by.y = "UnitsID"
+  )
 
   x_all <- merge(x_all, samples, by = "SampleID")
 
@@ -68,11 +70,15 @@ get_lab_values <- function(odbc_name)
   x_all <- x_all[order(x_all$QualityControlLevelID), ]
 
   # keep only higher QualityControlLevelID if measurements are double
-  y <- stats::aggregate(ValueID ~ SampleID + VariableID, data = x_all, FUN = length)
+  y <- stats::aggregate(
+    ValueID ~ SampleID + VariableID, data = x_all, FUN = length
+  )
 
   indices <- which(y[, 3] > 1)
 
-  y2 <- stats::aggregate(ValueID ~ SampleID + VariableID, data = x_all, FUN = "[", 1)
+  y2 <- stats::aggregate(
+    ValueID ~ SampleID + VariableID, data = x_all, FUN = "[", 1
+  )
 
   ValueIDs_LQ <- y2$ValueID[indices]
 
@@ -98,7 +104,8 @@ only_new_dl_metals <- function(x_in)
   # get detection limits that were lowered during project
   DL_metals_new <- getNewDetectionLimits()
 
-  # delete samples below detection limit, where detection limit is higher than current
+  # delete samples below detection limit, where detection limit is higher than
+  # current
   for (i in seq_along(DL_metals_new$VariableCode)) {
 
     indices <- which(
@@ -221,7 +228,7 @@ non_detect <- function(x_in)
   y <- order(site_IDs)
   site_IDs <- site_IDs[y]
 
-  mat_nodetect <- matrix(nrow=200, ncol=length(site_IDs)+1)
+  mat_nodetect <- matrix(nrow = 200, ncol = length(site_IDs) + 1)
 
   #find substances which are < dl in all samples
   indices_lt <- which(x_in$CensorCode == "lt")
@@ -287,7 +294,7 @@ adapt_nondetect <- function(x_in, x_nd, factor = 0.5)
 {
   site_names <- colnames(x_nd)[-1]
 
-  for (i in seq_len(dim(x_nd)[2]-1)) {
+  for (i in seq_len(dim(x_nd)[2] - 1)) {
 
     #set samples <dl for substances which are never detected = 0
     y <- match(x_in$VariableName, x_nd[,i+1])
@@ -433,23 +440,32 @@ default_statistics <- function(x)
 annual_stats <- function(x_in)
 {
   # Provide vector of SiteCodes ordered by their SiteID
-  site_names <- (x_in %>%
-                   dplyr::group_by(.data$SiteID,
-                                   .data$SiteCode) %>% summarise())$SiteCode
+  site_names <- (
+    x_in %>%
+      dplyr::group_by(
+        .data$SiteID,
+        .data$SiteCode
+      ) %>%
+      summarise()
+  )$SiteCode
 
   # Provide statistics grouped by SiteCode and Variable
   x_summary <- x_in %>%
-    dplyr::group_by(.data$SiteCode,
-                    .data$VariableID,
-                    .data$VariableName,
-                    .data$UnitsAbbreviation) %>%
+    dplyr::group_by(
+      .data$SiteCode,
+      .data$VariableID,
+      .data$VariableName,
+      .data$UnitsAbbreviation
+    ) %>%
     default_statistics()
 
   # Provide statistics grouped by Variable only
   x_total <- x_in %>%
-    dplyr::group_by(.data$VariableID,
-                    .data$VariableName,
-                    .data$UnitsAbbreviation) %>%
+    dplyr::group_by(
+      .data$VariableID,
+      .data$VariableName,
+      .data$UnitsAbbreviation
+    ) %>%
     default_statistics()
 
   # Provide vectors of column names
@@ -495,8 +511,8 @@ annual_stats <- function(x_in)
 #' separates pathways (rain runoff, CSO and WWTP)
 #'
 #' @param data.dir path of model data (annual mean concentrations
-#'   "annual_mean_conc.csv",  rain runoff volumes "Vol_rain.csv", removal at WWTP
-#'   "substance_info.csv")
+#'   "annual_mean_conc.csv",  rain runoff volumes "Vol_rain.csv", removal at
+#'   WWTP "substance_info.csv")
 #' @param error_removal_rate relative error in removal at WWTP
 #'
 #' @return Function returns list with loads and standard deviations,
@@ -540,14 +556,17 @@ annual_load_rain <- function(data.dir, error_removal_rate = 0.3)
   removal_rates_red$removal_percent <- removal_rates$Retention_.[indices]
 
   # order of catchments
-  sum_EZG <- stats::aggregate(vol_rain$GESAMT, by = list(vol_rain$SUW), FUN = "sum")
+  sum_EZG <- stats::aggregate(
+    vol_rain$GESAMT, by = list(vol_rain$SUW), FUN = "sum"
+  )
+
   indices <- order(sum_EZG$x, decreasing = TRUE)
   sum_EZG <- sum_EZG[indices,]
   EZG_names <- sum_EZG[,1]
 
   # structure of calculation files
-  load_sep <- x_conc[,c(1,2,4:9)]
-  load_sep[,3:8] <- 0
+  load_sep <- x_conc[, c(1, 2, 4:9)]
+  load_sep[, 3:8] <- 0
   load_sep$TOT <- 0
   error_load_sep <- load_sep
   load_CSO <- load_sep
@@ -709,18 +728,18 @@ get_path_or_stop <- function(data_dir, file_name, subject)
 #' separates pathways (CSO and WWTP)
 #'
 #' @param data.dir path of model data (annual mean concentrations
-#'   "substance_info.csv",  WWTP runoff volumes "Vol_sewage.csv", removal at WWTP
-#'   "substance_info.csv", optional: relative error by substance can be indicated
-#'   as additional column "error_conc" in "substance_info.csv")
+#'   "substance_info.csv",  WWTP runoff volumes "Vol_sewage.csv", removal at
+#'   WWTP "substance_info.csv", optional: relative error by substance can be
+#'   indicated as additional column "error_conc" in "substance_info.csv")
 #' @param error_removal_rate relative error in removal at WWTP
-#' @param error_conc constant relative error in concentrations at WWTP outflow (default = 0.5)
-#' or "individual" if relative error by substance is included in "substance_info.csv"
+#' @param error_conc constant relative error in concentrations at WWTP outflow
+#'   (default = 0.5) or "individual" if relative error by substance is included
+#'   in "substance_info.csv"
 #'
-#' @return Function returns list with loads and standard deviations,
-#' by entry path (cso, wwtp) and by surface water catchment.
-#' Concentration in units "mg/L" and "ug/L" is automatically
-#' transformed to loads in "kg/yr". Other (unknown) units are
-#' left unchanged, resulting in "unit * m3/yr".
+#' @return Function returns list with loads and standard deviations, by entry
+#'   path (cso, wwtp) and by surface water catchment. Concentration in units
+#'   "mg/L" and "ug/L" is automatically transformed to loads in "kg/yr". Other
+#'   (unknown) units are left unchanged, resulting in "unit * m3/yr".
 #'
 #' @export
 annual_load_sewage <- function(
@@ -791,11 +810,11 @@ annual_load_sewage <- function(
     indices_mgL <- which(sub_sew_info$UnitsAbbreviation == "mg/L")
     indices_ugL <- which(sub_sew_info$UnitsAbbreviation == "ug/L")
 
-    load_sew[indices_mgL,-1] <- load_sew[indices_mgL,-1] / 1000
-    load_sew[indices_ugL,-1] <- load_sew[indices_ugL,-1] / 1e6
+    load_sew[indices_mgL, -1] <- load_sew[indices_mgL, -1] / 1000
+    load_sew[indices_ugL, -1] <- load_sew[indices_ugL, -1] / 1e6
 
-    error_load_sew[indices_mgL,-1] <- error_load_sew[indices_mgL,-1] / 1000
-    error_load_sew[indices_ugL,-1] <- error_load_sew[indices_ugL,-1] / 1e6
+    error_load_sew[indices_mgL, -1] <- error_load_sew[indices_mgL, -1] / 1000
+    error_load_sew[indices_ugL, -1] <- error_load_sew[indices_ugL, -1] / 1e6
 
     # organize in list
     x_out_by_pathway_kg_yr[[EZG_names[i]]] <- load_sew
@@ -821,8 +840,8 @@ getNewDetectionLimits <- function()
   detectionLimits.vector <- c(
     Pb = 0.5,
     Cd = 0.05,
-    Cr  = 0.2,
-    Ni  = 0.5,
+    Cr = 0.2,
+    Ni = 0.5,
     V  = 0.1
   )
 
@@ -1025,8 +1044,13 @@ annual_mean_conc_method1 <- function(x_in, x_out_mean, x_out_stdev, site_names)
     values <- x_in$DataValue[selected]
     BY <- list(x_in$VariableID[selected])
 
-    x_out_mean [[site_name]] <- stats::aggregate(values, by = BY, FUN = "mean")[, 2]
-    x_out_stdev[[site_name]] <- stats::aggregate(values, by = BY, FUN = "sd")[, 2]
+    x_out_mean [[site_name]] <- stats::aggregate(
+      values, by = BY, FUN = "mean"
+    )[, 2]
+
+    x_out_stdev[[site_name]] <- stats::aggregate(
+      values, by = BY, FUN = "sd"
+    )[, 2]
   }
 
   list(
@@ -1039,7 +1063,9 @@ annual_mean_conc_method1 <- function(x_in, x_out_mean, x_out_stdev, site_names)
 #' @importFrom kwb.utils renameColumns
 #' @keywords internal
 #' @noRd
-annual_mean_conc_method2 <- function(x_out_mean, x_out_stdev, site_names, data.dir)
+annual_mean_conc_method2 <- function(
+  x_out_mean, x_out_stdev, site_names, data.dir
+)
 {
   #read correlation info and rain series
   x_correlations <- read_2(comment.char = "", file = get_path_or_stop(
@@ -1051,7 +1077,7 @@ annual_mean_conc_method2 <- function(x_out_mean, x_out_stdev, site_names, data.d
   ))
 
   #keep only lines active for model calculations
-  x_correlations <- x_correlations[which(x_correlations$active == "x"),]
+  x_correlations <- x_correlations[which(x_correlations$active == "x"), ]
 
   #add VariableName
   variables <- kwb.ogre::OGRE_VARIABLES()
@@ -1155,7 +1181,9 @@ annual_mean_conc_method2 <- function(x_out_mean, x_out_stdev, site_names, data.d
       #select affected VariableName in output file
       indices_out <- match(x_by_site$VariableName[i], x_out_mean$VariableName)
 
-      x_out_mean[[site_name]][indices_out] <- sum(x_rain_events$C_times_RD, na.rm = TRUE)/sum(x_rain_events$RD, na.rm = TRUE)
+      x_out_mean[[site_name]][indices_out] <-
+        sum(x_rain_events$C_times_RD, na.rm = TRUE) /
+        sum(x_rain_events$RD, na.rm = TRUE)
 
       #parametrisation for error function
       RMSE <- x_by_site$RMSE[i]
