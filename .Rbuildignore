@@ -8,3 +8,4 @@
 ^index\.Rmd$
 ^.travis\.yml$
 ^appveyor\.yml$
+^\.github$
