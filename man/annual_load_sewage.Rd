@@ -4,8 +4,7 @@
 \alias{annual_load_sewage}
 \title{calculates the load for each substance}
 \usage{
-annual_load_sewage(data.dir, error_removal_rate = 0.3,
-  error_conc = 0.5)
+annual_load_sewage(data.dir, error_removal_rate = 0.3, error_conc = 0.5)
 }
 \arguments{
 \item{data.dir}{path of model data (annual mean concentrations
